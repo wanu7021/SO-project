@@ -26,8 +26,10 @@ public class Practica {
         Usuario u2 = Global.usuariosActivos.get(1);
         Usuario u3 = Global.usuariosActivos.get(2);
         Usuario u4 = Global.usuariosActivos.get(3);
+        Usuario u5 = Global.usuariosActivos.get(4);
+        Usuario u6 = Global.usuariosActivos.get(5);
         
-        System.out.println("U1 id: "+u1.getIdU()+"\nU2 id: "+u2.getIdU() + "\nU3 id: " + u3.getIdU());
+        System.out.println("U1 id: "+u1.getNombre()+"\nU2 id: "+u2.getNombre() + "\nU3 id: " + u3.getNombre() + "\nU4 id: " + u4.getNombre() + "\nU5 id: " + u5.getNombre() + "\nU6 id: " + u6.getNombre());
         /*
         u2.votarPublicacion(Global.publicacionesActivas.get(0), false);
         u3.votarPublicacion(Global.publicacionesActivas.get(0), false);
@@ -42,25 +44,28 @@ public class Practica {
         u2.votarPublicacion(Global.publicacionesActivas.get(1), false);
         System.out.println("***********FINALIZA CASO 1***********");
         System.out.println("***********CASO 2***********");
-        u3.votarPublicacion(Global.publicacionesActivas.get(1), false); //comun
-        u2.votarPublicacion(Global.publicacionesActivas.get(1), false); //experto
-        System.out.println("***********FINALIZA CASO 2***********");
+        u3.votarPublicacion(Global.publicacionesActivas.get(0), false); //comun
+        u2.votarPublicacion(Global.publicacionesActivas.get(0), true);  //comun
+        u4.votarPublicacion(Global.publicacionesActivas.get(0), false); //experto
+        System.out.println("***********FINALIZA CASO 2***********");*/
         System.out.println("***********CASO 4***********");
+        u2.votarPublicacion(Global.publicacionesActivas.get(1), true); //No deberia votar porque es su publicacion
         u1.votarPublicacion(Global.publicacionesActivas.get(1), true); 
-        u2.votarPublicacion(Global.publicacionesActivas.get(1), true);
+        u1.votarPublicacion(Global.publicacionesActivas.get(1), true); //No deberia votar porque ya voto esta misma publicacion
+        u5.votarPublicacion(Global.publicacionesActivas.get(1), true);
         //el sistema valida luego de que u1 y u2 votan a favor, u3 no deberia poder votar
         u3.votarPublicacion(Global.publicacionesActivas.get(1), true);
-        System.out.println("***********FINALIZA CASO 4***********");
+        System.out.println("***********FINALIZA CASO 4***********");/*
         System.out.println("***********CASO 5**********");
         u1.setAnuladas(2);
         u2.votarPublicacion(Global.publicacionesActivas.get(0), false); //anula
-        Thread.sleep(5005);
+        Thread.sleep(5100);
         u1.votarPublicacion(Global.publicacionesActivas.get(1), true);
-        System.out.println("***********FINALIZA CASO 5***********");*/
+        System.out.println("***********FINALIZA CASO 5***********");
         System.out.println("***********CASO 6**********");
         u1.eliminarPublicacion(Global.publicacionesActivas.get(0)); //chequear que sea el autor
         //Thread.sleep(6000);
-        u2.votarPublicacion(Global.publicacionesActivas.get(0), true);
+        u2.votarPublicacion(Global.publicacionesActivas.get(0), true);*/
         
     }
     
