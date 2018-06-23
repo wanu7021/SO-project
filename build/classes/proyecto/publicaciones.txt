@@ -1,3 +1,6 @@
-Operativos;Nadie entiende nada;Informatica
-Demostraciones;Se entiende menos;Matematica
-Son todos trolos;ahre;none
+Publicacion1;Contenido de la pub 1;Informatica;1
+Publicacion2;Contenido de la pub 2;Informatica;0
+Publicacion3;Contenido de la pub 3;Gato;2
+Publicacion4;Contenido de la pub 4;Informatica;3
+Publicacion5;Contenido de la pub 5;Demostraciones;1
+Publicacion6;Contenido de la pub 6;Gato;2

@@ -16,7 +16,7 @@ import java.util.concurrent.Semaphore;
  * @author federico
  */
 public class Usuario {
-    private final UUID idU;
+    private final int idU;
     private int telefono;
     private String nombre, direccion;
     private boolean esActivo;
@@ -31,7 +31,7 @@ public class Usuario {
         this.nombre = nombre;
         this.telefono = telefono;
         this.direccion = direccion;
-        idU = UUID.randomUUID();
+        this.idU = Global.idUsuario++;
         this.expertise = expertise;
         this.esActivo = true;
         this.premiado = false;
@@ -42,7 +42,7 @@ public class Usuario {
         this.mutex = new Semaphore(1);
     }
     
-    public UUID getIdU() {
+    public int getIdU() {
         return idU;
     }
 
@@ -180,7 +180,7 @@ public class Usuario {
             return;
         }
         
-        HiloVoto hilo = new HiloVoto(this, p, aFavor, 5000);
+        HiloVotar hilo = new HiloVotar(aFavor, p,this);
         boolean experto = this.expertise.contains(p.getTema());
         if(experto){
             hilo.setPriority(8); //menos que bloquear pero mas que premiado
@@ -197,15 +197,15 @@ public class Usuario {
     
     public void leerPublicacion(Publicacion p) throws InterruptedException{
         if(this.bloqueado) return;
-        HiloLeer hilo = new HiloLeer(p, this, 5000);
+        HiloLeer hilo = new HiloLeer(p, this);
         mutex.acquire();
         hilo.start();
         mutex.release();
     }
     
     public void eliminarPublicacion(Publicacion p) throws InterruptedException{
-        if(this.bloqueado) return;
-        HiloEliminarPublicacion hilo = new HiloEliminarPublicacion(this.getIdU(), p, 5000, this.mutex);
+        if(this.bloqueado || p.getUsuarioEmisor() == (this.idU)) return;
+        HiloEliminarPublicacion hilo = new HiloEliminarPublicacion(this, p);
         mutex.acquire();
         hilo.start();
         mutex.release();

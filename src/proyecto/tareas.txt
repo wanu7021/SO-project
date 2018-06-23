@@ -1,0 +1,6 @@
+Votar;Favor;1;1
+Votar;Contra;3;1
+Leer;3;2
+Votar;Favor;2;2
+Eliminar;2;3
+Crear;Titulo1;ContenidoNuevo1;Informatica;3;7

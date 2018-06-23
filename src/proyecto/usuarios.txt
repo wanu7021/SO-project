@@ -1,4 +1,4 @@
-Federico;Sabat pebet;1234;Informatica,Matematica
-Enzo;Rivera;4567;Informatica,Gato
-JuanCa;Nosedonde;1245;Putear,Enojarse 
-Dhiago;Nolose;12356;mmm
+Federico;Sabat pebet;092;Informatica,Matematica
+Enzo;Rivera;098;Informatica,Gato
+JuanCa;Nosedonde;098;Putear,Informatica 
+Manuel;Nolose;099;Matematica,Informatica

@@ -17,7 +17,7 @@ public class HiloLeer extends Thread{
     private Usuario usuario;
     private long tiempo;
     
-    public HiloLeer(Publicacion p, Usuario usuario, long tiempo){
+    public HiloLeer(Publicacion p, Usuario usuario){
         this.p = p;
         this.usuario = usuario;
         this.tiempo = tiempo;
@@ -25,9 +25,12 @@ public class HiloLeer extends Thread{
     
     @Override
     public void run(){
-        System.out.println("El usuario " + this.usuario.getIdU() + " esta leyendo " + this.p.getTitulo());
         try {
-            Thread.sleep(this.tiempo);
+            usuario.getSem().acquire();
+            System.out.println("El usuario " + this.usuario.getIdU() + " esta leyendo " + this.p.getTitulo());
+            Thread.sleep(10000);
+            Global.contador++;
+            usuario.getSem().release();
         } catch (InterruptedException ex) {
             Logger.getLogger(HiloLeer.class.getName()).log(Level.SEVERE, null, ex);
         }

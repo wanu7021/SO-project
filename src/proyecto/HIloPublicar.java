@@ -28,9 +28,21 @@ public class HIloPublicar extends Thread{
     
     public void run(){
         if(usuarioEmisor.esActivo()){
-           Publicacion p = new Publicacion(this.tema, this.contenido, this.usuarioEmisor.getIdU(),
-                           this.tema);
-           Global.publicacionesActivas.add(p);
+            try{
+                usuarioEmisor.getSem().acquire();
+                System.out.println(usuarioEmisor.getNombre() + " se bloquea para crear una publicacion.");
+                Publicacion p = new Publicacion(this.titulo, this.contenido, this.usuarioEmisor.getIdU(),
+                               this.tema);
+                Global.publicacionesActivas.add(p);
+                Global.contador++;
+                usuarioEmisor.getSem().release();
+            }
+            catch(Exception ex){
+                ex.getCause();
+            }
+        }
+        else{
+            System.out.println("No es activo");
         }
     }
 

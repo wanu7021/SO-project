@@ -5,16 +5,19 @@
  */
 package proyecto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author federico
  */
 public class Publicacion {
-    private UUID usuarioEmisor;
+    private int usuarioEmisor;
     private String contenido;
     private double contadorVotosAFavor;
     private double contadorVotosEnContra;
@@ -25,9 +28,10 @@ public class Publicacion {
     private String titulo;
     private String tema;
     private Semaphore mutex;
-    private Semaphore mutexGlobal;
+    private int id;
+    private ArrayList<Integer> votantes;
 
-    public Publicacion(String titulo, String contenido, UUID emisor, String tema) {
+    public Publicacion(String titulo, String contenido, int emisor, String tema) {
         activa = true;
         validada = false;
         this.contenido = contenido;
@@ -39,14 +43,27 @@ public class Publicacion {
         porcentajeEnContra = 0;
         this.tema = tema;
         this.mutex = new Semaphore(1);
-        this.mutexGlobal = Global.mutex2;
+        this.id = Global.idPub++;
+        votantes = new ArrayList<>();
     }
 
-    public UUID getUsuarioEmisor() {
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public ArrayList<Integer> getVotantes() {
+        return votantes;
+    }
+    
+    public int getUsuarioEmisor() {
         return usuarioEmisor;
     }
 
-    public void setUsuarioEmisor(UUID usuarioEmisor) {
+    public void setUsuarioEmisor(int usuarioEmisor) {
         this.usuarioEmisor = usuarioEmisor;
     }
 
@@ -122,6 +139,10 @@ public class Publicacion {
     public void setTema(String tema) {
         this.tema = tema;
     }
+
+    public Semaphore getMutex() {
+        return mutex;
+    }
     
     /**
      * Método que vota a favor la publicación
@@ -130,24 +151,14 @@ public class Publicacion {
      * @return true si se pudo hacer correctamente
      * @throws InterruptedException 
      */
-    public boolean votarAFavor(double valor, UUID uuid) throws InterruptedException{
-        mutexGlobal.acquire();
-        mutex.acquire();
+    public boolean votarAFavor(double valor, int uuid) throws InterruptedException{
         
         if (Global.publicacionesActivas.contains(this)){
-            System.out.println(this.titulo + " fue bloqueada (voto a favor) por "+uuid);
-            Thread.sleep(5000);
-            
             this.contadorVotosAFavor+= valor;
+            this.votantes.add(uuid);
             obtenerPorcentajeAFavor();
-            HiloChequeaPublicacion hilo = new HiloChequeaPublicacion(this);
-            hilo.run();
-            System.out.println(this.titulo + " fue liberada (voto a favor) por "+uuid);
+            chequeaPublicacion();
         }
-        mutex.release(); //sigue con el mutex bloqueado para evitar que otro usuario quiera votar,
-                             //sino puede darse que un usuario vote una publicacion que deberia ser 
-                             //validada 
-        mutexGlobal.release();
         return true;
     }
     
@@ -158,24 +169,43 @@ public class Publicacion {
      * @return true si se pudo hacer correctamente
      * @throws InterruptedException 
      */
-    public boolean votarEnContra(double valor, UUID uuid) throws InterruptedException{
-        mutexGlobal.acquire(); //para que no haya nadie votando o eliminando al mismo tiempo
-        mutex.acquire();
+    public boolean votarEnContra(double valor, int uuid) throws InterruptedException{
         if (Global.publicacionesActivas.contains(this)){
-            System.out.println(this.titulo + " fue bloqueada (voto en contra) por "+uuid);
-            Thread.sleep(5000);
             this.contadorVotosEnContra+= valor;
+            this.votantes.add(uuid);
             obtenerPorcentajeEnContra();
-            HiloChequeaPublicacion hilo = new HiloChequeaPublicacion(this);
-            hilo.run();
-            System.out.println(this.titulo + " fue liberada (voto en contra) por "+uuid);
+            chequeaPublicacion();
         }
-        mutex.release();//sigue con el mutex bloqueado para evitar que otro usuario quiera votar,
-                         //sino puede darse que un usuario vote una publicacion que deberia ser 
-                         //anulada
-        mutexGlobal.release();
         
         return true;
+    }
+    
+    public void chequeaPublicacion(){
+        obtenerActiva();
+        if(!this.isActiva()){
+            if(this.porcentajeAFavor>0.6){
+                try {
+                    this.validarPublicacion();
+                } catch (InterruptedException ex) {
+                    ex.getCause();
+                }
+            }
+            else{
+                try {
+                    
+                    this.anularPublicacion();
+
+                } catch (InterruptedException ex) {
+                    ex.getCause();
+                }
+            }
+        }
+    }
+    
+    public void obtenerActiva(){
+        if (this.porcentajeAFavor>0.6 || this.porcentajeEnContra>0.4){
+            this.activa = false;
+        }
     }
     
     public void obtenerPorcentajeAFavor(){
@@ -189,7 +219,8 @@ public class Publicacion {
     public boolean eliminarPublicacionActiva() throws InterruptedException{
         mutex.acquire();
         System.out.println(this.titulo + " fue bloqueada (eliminar)");
-        HiloEliminarPublicacion hilo = new HiloEliminarPublicacion(this.usuarioEmisor, this, 5000, this.mutex);
+        Usuario us = Global.buscarUsuario(this.usuarioEmisor);
+        HiloEliminarPublicacion hilo = new HiloEliminarPublicacion(us, this);
         boolean flag = Global.publicacionesActivas.remove(this);
         mutex.release();
         System.out.println(this.titulo + " fue liberada (eliminar)");
@@ -200,10 +231,8 @@ public class Publicacion {
         //mutex.acquire();
         boolean flag = Global.publicacionesActivas.remove(this);
         for(Usuario u : Global.usuarios){
-            if(u.getIdU().equals(this.usuarioEmisor)){ 
-                HiloBloqueaUsuario hiloB = new HiloBloqueaUsuario(u, u.getSem());
-                hiloB.setPriority(Thread.MAX_PRIORITY);
-                hiloB.start();
+            if(u.getIdU() == (this.usuarioEmisor)){ 
+                bloquearUsuario(u);
                 break;
             }
         }
@@ -213,15 +242,32 @@ public class Publicacion {
         return flag;
     }
     
+    public void bloquearUsuario(Usuario usuario){
+        try {
+            usuario.getSem().acquire();
+            usuario.setAnuladas(usuario.getAnuladas() + 1);
+            usuario.setPrem(0);
+            if(usuario.getAnuladas() == Global.cantidadBloqueado){
+                usuario.setBloqueado(true);
+                usuario.setPremiado(false);
+                System.out.println("EL usuario " + usuario.getIdU() + " ha sido bloqueado");
+                    
+            }
+            usuario.getSem().release();
+        
+        } catch (InterruptedException ex) {
+            ex.getCause();
+        }
+    }
+    
     public boolean validarPublicacion() throws InterruptedException{
         //mutex.acquire(); porque ya esta bloqueado por el votar()
         boolean flag = Global.publicacionesActivas.remove(this);
         if(flag){
             Global.publicacionesPasivas.add(this);
             for(Usuario u : Global.usuarios){
-                if(u.getIdU().equals(this.usuarioEmisor)){
-                    HiloPremiaUsuario hiloP = new HiloPremiaUsuario(u);
-                    hiloP.setPriority(5);
+                if(u.getIdU() == (this.usuarioEmisor)){
+                    premiarUsuario(u);
                     break;
                 }
             }
@@ -230,6 +276,20 @@ public class Publicacion {
                 this.porcentajeAFavor*100 + "% de los votos a favor");
         //mutex.release();
         return flag;
+    }
+    
+    public void premiarUsuario(Usuario usuario){
+        try {
+            usuario.getSem().acquire();
+            usuario.setAnuladas(0);
+            usuario.setPrem(usuario.getPrem() + 1);
+            if(usuario.getPrem() == Global.cantidadPremiado){
+                usuario.setPremiado(true);
+            }
+            usuario.getSem().release();
+        } catch (InterruptedException ex) {
+            ex.getCause();
+        }
     }
     
     @Override

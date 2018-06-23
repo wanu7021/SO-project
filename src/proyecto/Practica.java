@@ -5,6 +5,10 @@
  */
 package proyecto;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.UUID;
+
 /**
  *
  * @author federico
@@ -19,54 +23,149 @@ public class Practica {
         /*Thread procesoUno = new ProcesoUno();
         Thread procesoDos = new Thread();
         Thread principal = new ProgramaPrincipal();*/
+        
+        
+        
         ProgramaPrincipal p = new ProgramaPrincipal();
         //Global g = new Global();
         p.cargar();
-        Usuario u1 = Global.usuariosActivos.get(0);
-        Usuario u2 = Global.usuariosActivos.get(1);
-        Usuario u3 = Global.usuariosActivos.get(2);
-        Usuario u4 = Global.usuariosActivos.get(3);
-        Usuario u5 = Global.usuariosActivos.get(4);
-        Usuario u6 = Global.usuariosActivos.get(5);
         
-        System.out.println("U1 id: "+u1.getNombre()+"\nU2 id: "+u2.getNombre() + "\nU3 id: " + u3.getNombre() + "\nU4 id: " + u4.getNombre() + "\nU5 id: " + u5.getNombre() + "\nU6 id: " + u6.getNombre());
-        /*
-        u2.votarPublicacion(Global.publicacionesActivas.get(0), false);
-        u3.votarPublicacion(Global.publicacionesActivas.get(0), false);
+        Comparator<Tarea> c = new Comparator<Tarea>() {
+            @Override
+            public int compare(Tarea o1, Tarea o2) {
+                if(o1.getPrioridad() > o2.getPrioridad()) return 1;
+                return -1;
+            }
+        };
+        Global.colaDeTareas.sort(c); //ordenada por prioridad     
         
-        u4.votarPublicacion(Global.publicacionesActivas.get(0), true);
-        u1.votarPublicacion(Global.publicacionesActivas.get(0), true);
-        */
-        //CASO 1:
-        /*
-        System.out.println("***********CASO 1***********");
-        u1.votarPublicacion(Global.publicacionesActivas.get(1), true); 
-        u2.votarPublicacion(Global.publicacionesActivas.get(1), false);
-        System.out.println("***********FINALIZA CASO 1***********");
-        System.out.println("***********CASO 2***********");
-        u3.votarPublicacion(Global.publicacionesActivas.get(0), false); //comun
-        u2.votarPublicacion(Global.publicacionesActivas.get(0), true);  //comun
-        u4.votarPublicacion(Global.publicacionesActivas.get(0), false); //experto
-        System.out.println("***********FINALIZA CASO 2***********");*/
-        System.out.println("***********CASO 4***********");
-        u2.votarPublicacion(Global.publicacionesActivas.get(1), true); //No deberia votar porque es su publicacion
-        u1.votarPublicacion(Global.publicacionesActivas.get(1), true); 
-        u1.votarPublicacion(Global.publicacionesActivas.get(1), true); //No deberia votar porque ya voto esta misma publicacion
-        u5.votarPublicacion(Global.publicacionesActivas.get(1), true);
-        //el sistema valida luego de que u1 y u2 votan a favor, u3 no deberia poder votar
-        u3.votarPublicacion(Global.publicacionesActivas.get(1), true);
-        System.out.println("***********FINALIZA CASO 4***********");/*
-        System.out.println("***********CASO 5**********");
-        u1.setAnuladas(2);
-        u2.votarPublicacion(Global.publicacionesActivas.get(0), false); //anula
-        Thread.sleep(5100);
-        u1.votarPublicacion(Global.publicacionesActivas.get(1), true);
-        System.out.println("***********FINALIZA CASO 5***********");
-        System.out.println("***********CASO 6**********");
-        u1.eliminarPublicacion(Global.publicacionesActivas.get(0)); //chequear que sea el autor
-        //Thread.sleep(6000);
-        u2.votarPublicacion(Global.publicacionesActivas.get(0), true);*/
+        
+        int tiempo = 0;
+        
+        /**
+         * Aca tengo que tomar una tarea de la cola, ejecutarla y bloquear el semaforo contador
+         * , lo cual decrementa en 1. Para mandar a ejecutar, tengo que agarrar la tarea 
+         * siempre del principio, ya que es la más piorizante, tomar la accion, ver cuál es,
+         * y crear un hilo en base a eso.
+         * 
+         */
+        int k = Global.colaDeTareas.size()-1;
+        while (k>=0){
+            System.out.println("Tiempo "+ tiempo++);
+            
+            //Global.mutexTareas.acquire();
+          
+            
+            if(k>2){
+
+                String accion = Global.colaDeTareas.get(k).getDatos();
+                String accion1 = Global.colaDeTareas.get(k-1).getDatos();
+                String accion2 = Global.colaDeTareas.get(k-2).getDatos();
+                String accion3 = Global.colaDeTareas.get(k-3).getDatos();
+
+                Global.crearHilo(accion);
+                Global.crearHilo(accion1);
+                Global.crearHilo(accion2);
+                Global.crearHilo(accion3);
+                
+                
+                Global.listaTareas.get(0).start();
+                Global.listaTareas.get(1).start();
+                Global.listaTareas.get(2).start();
+                Global.listaTareas.get(3).start();
+                
+                
+                while(true){
+                    if (Global.contador%4 == 0 && Global.contador != 0){
+                        break;
+                    }
+                    Thread.sleep(1);
+                }
+                
+                Global.mutexTareas.release();
+                
+                Global.listaTareas.remove(0);
+                Global.listaTareas.remove(0);
+                Global.listaTareas.remove(0);
+                Global.listaTareas.remove(0);
+                
+            }
+            else if(k == 2){
+                String accion = Global.colaDeTareas.get(k).getDatos();
+                String accion1 = Global.colaDeTareas.get(k-1).getDatos();
+                String accion2 = Global.colaDeTareas.get(k-2).getDatos();
+
+                Global.crearHilo(accion);
+                Global.crearHilo(accion1);
+                Global.crearHilo(accion2);
+
+                Global.listaTareas.get(0).start();
+                Global.listaTareas.get(1).start();
+                Global.listaTareas.get(2).start();
+                
+                while(true){
+                    if (Global.contador%4 == 3 && Global.contador != 0){
+                        break;
+                    }
+                    Thread.sleep(1);
+                }
+                Global.mutexTareas.release();
+                
+                Global.listaTareas.remove(0);
+                Global.listaTareas.remove(0);
+                Global.listaTareas.remove(0);
+                
+            }
+            else if (k==1){
+                
+                String accion = Global.colaDeTareas.get(k).getDatos();
+                String accion1 = Global.colaDeTareas.get(k-1).getDatos();
+
+                Global.crearHilo(accion);
+                Global.crearHilo(accion1);
+
+                Global.listaTareas.get(0).start();
+                Global.listaTareas.get(1).start();
+                
+                while(true){
+                    if (Global.contador%4 == 2 && Global.contador != 0){
+                        break;
+                    }
+                    Thread.sleep(1);
+                }
+                Global.mutexTareas.release();
+                
+                Global.listaTareas.remove(0);
+                Global.listaTareas.remove(0);
+                
+            }
+            else{
+                
+                String accion = Global.colaDeTareas.get(k).getDatos();
+               
+                Global.crearHilo(accion);
+               
+                Global.listaTareas.get(0).start();
+                
+                while(true){
+                    if (Global.contador%4 == 1 && Global.contador != 0){
+                        break;
+                    }
+                    Thread.sleep(1);
+                }
+                Global.mutexTareas.release();
+                
+                Global.listaTareas.remove(0);
+                
+            }
+            
+            
+            
+            k-=4;
+                       
+        }
         
     }
+
     
 }

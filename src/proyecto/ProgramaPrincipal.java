@@ -6,6 +6,7 @@
 package proyecto;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,10 +43,17 @@ public class ProgramaPrincipal extends Thread{
             String titulo = split[0];
             String contenido = split[1];
             String tema = split[2];
-            UUID emisor = Global.usuariosActivos.get(i++).getIdU();
+            int emisor = Integer.parseInt(split[3]);
             Publicacion p = new Publicacion(titulo, contenido, emisor, tema);
             Global.publicacionesActivas.add(p);
             
+        }
+        
+        
+        String[] archivoTareas = ManejadorArchivosGenerico.leerArchivo("./src/proyecto/tareas.txt", false);
+        for( i = 0; i< archivoTareas.length; i++){
+            Tarea t = new Tarea(archivoTareas[i]);
+            Global.colaDeTareas.add(t);
         }
         
         
